@@ -124,14 +124,14 @@ export default function ModalAdicionarPromocao({ visivel, fechar, post, onSalvar
                   <View style={[styles.checkbox, layoutAtivo && styles.checkboxAtivo]}>
                     {layoutAtivo && <Ionicons name="checkmark" size={14} color="#fff" />}
                   </View>
-                  <Text style={styles.checkboxLabel}>Adicionar layout promocional (IA)</Text>
+                  <Text style={styles.checkboxLabel}>Gerar card de destaque com IA</Text>
                 </Pressable>
 
                 {layoutAtivo && (
                   <View style={styles.bannerInfo}>
                     <Ionicons name="color-wand-outline" size={24} color="#983CFF" />
                     <Text style={styles.bannerInfoText}>
-                      Banner será gerado automaticamente pela IA
+                      A IA vai gerar um texto criativo de divulgação que aparece sobre a imagem do produto no feed
                     </Text>
                   </View>
                 )}
