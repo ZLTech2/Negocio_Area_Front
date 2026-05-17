@@ -14,17 +14,36 @@ const CORES = ['#e74c3c', '#2ecc71', '#e91e8c', '#333333', '#6b6b2a', '#2c3e7a',
 const CLOUDINARY_CLOUD_NAME = 'dzqt0re7t';
 const CLOUDINARY_UPLOAD_PRESET = 'negocionaarea';
 
+// Faz upload da imagem diretamente para o Cloudinary e retorna a secure_url
 async function uploadCloudinary(uri) {
   const formData = new FormData();
-  formData.append('file', { uri, name: 'imagem.jpg', type: 'image/jpeg' });
+  formData.append('file', { uri, name: 'logo.jpg', type: 'image/jpeg' });
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
   const response = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
     { method: 'POST', body: formData }
   );
-  if (!response.ok) throw new Error('Falha no upload da imagem');
+  if (!response.ok) throw new Error('Falha no upload da imagem para o Cloudinary');
   const data = await response.json();
   return data.secure_url;
+}
+
+async function salvarLogoNaApi(cloudinaryUrl, authToken) {
+  const formData = new FormData();
+  formData.append('logo', { uri: cloudinaryUrl, name: 'logo.jpg', type: 'image/jpeg' });
+
+  const response = await fetch(`${API_BASE_URL}/empresas/me/logo`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${authToken}` },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const erro = await response.json().catch(() => ({}));
+    throw new Error(erro.message || 'Erro ao salvar logo na API');
+  }
+
+  return response.json();
 }
 
 export default function ModalEditarPerfil({ visivel, fechar, perfil, onSalvar }) {
@@ -64,41 +83,25 @@ export default function ModalEditarPerfil({ visivel, fechar, perfil, onSalvar })
     try {
       let logoUrlFinal = fotoPerfil;
 
-      // se escolheu uma nova foto local (começa com file:// ou content://)
+      
       const fotoEhLocal = fotoPerfil && !fotoPerfil.startsWith('http');
 
       if (fotoEhLocal) {
-        // faz upload para a API
-        const formData = new FormData();
-        formData.append('logo', {
-          uri: fotoPerfil,
-          name: 'logo.jpg',
-          type: 'image/jpeg',
-        });
+        const cloudinaryUrl = await uploadCloudinary(fotoPerfil);
 
-        const response = await fetch(`${API_BASE_URL}/empresas/me/logo`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            'Content-Type': 'multipart/form-data',
-          },
-          body: formData,
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          // normaliza para URL completa antes de salvar
+        try {
+          const data = await salvarLogoNaApi(cloudinaryUrl, authToken);
           logoUrlFinal = data.logoUrl
-            ? data.logoUrl.startsWith('http')
-              ? data.logoUrl
-              : `${API_BASE_URL}${data.logoUrl}`
-            : logoUrlFinal;
-          // atualiza o contexto imediatamente para o footer refletir na hora
-          setFotoPerfilEmpresa(logoUrlFinal);
+            ? (data.logoUrl.startsWith('http') ? data.logoUrl : `${API_BASE_URL}${data.logoUrl}`)
+            : cloudinaryUrl;
+        } catch (apiErr) {
+          console.log('Aviso: API não persistiu logo via multipart, usando URL Cloudinary:', apiErr.message);
+          logoUrlFinal = cloudinaryUrl;
         }
+
+        setFotoPerfilEmpresa(logoUrlFinal);
       }
 
-      // salva nome e descrição se mudaram
       if (nomeLoja || descricao) {
         await fetch(`${API_BASE_URL}/empresas/me`, {
           method: 'PATCH',
@@ -117,10 +120,11 @@ export default function ModalEditarPerfil({ visivel, fechar, perfil, onSalvar })
         fotoFundo,
         cor: corSelecionada,
       });
-      Toast.show({type: 'success', text1: 'Perfil atualizado com sucesso'});
+      Toast.show({ type: 'success', text1: 'Perfil atualizado com sucesso' });
       fechar();
     } catch (err) {
       console.log('Erro ao salvar perfil:', err);
+      Toast.show({ type: 'error', text1: 'Erro ao salvar perfil', text2: err.message });
     } finally {
       setSalvando(false);
     }
