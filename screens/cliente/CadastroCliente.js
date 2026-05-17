@@ -229,7 +229,7 @@ const CadastroCliente = ({ navigation }) => {
                 style={styles.linkAcesso}>
                 <Text style={styles.txtLink}>
                   Já tem cadastro? Faça o Login
-                </Text>{' '}
+                </Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
