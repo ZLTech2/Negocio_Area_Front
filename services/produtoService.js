@@ -18,3 +18,18 @@ export async function buscarProdutosPorEmpresa(empresaId) {
     method: 'GET',
   });
 }
+
+export async function adicionarPromocao(produtoId, dados, token) {
+  return apiFetch(`/produtos/${produtoId}/promocao`, {
+    method: 'PUT',
+    token,
+    body: dados,
+  });
+}
+
+export async function removerPromocao(produtoId, token) {
+  return apiFetch(`/produtos/${produtoId}/promocao`, {
+    method: 'DELETE',
+    token,
+  });
+}

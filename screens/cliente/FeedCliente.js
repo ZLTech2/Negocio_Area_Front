@@ -40,27 +40,40 @@ export default function FeedCliente({ navigation }) {
   }, []);
 
   const renderItem = ({ item }) => {
-    const imagemUrl = item.imagem
-  ? item.imagem.startsWith('http')
-    ? item.imagem
-    : `${API_BASE_URL}${item.imagem}`
-  : null;
+  const imagemUrl = item.imagem
+    ? item.imagem.startsWith('http')
+      ? item.imagem
+      : `${API_BASE_URL}${item.imagem}`
+    : null;
 
-    return (
-      <Pressable style={styles.card} onPress={() => navigation.navigate('DetalhesPost', { produto: item })}>
-        <View style={styles.empresaHeader}>
-          <Text style={styles.nomeEmpresa}>LOJA: {item.nomeEmpresa}</Text>
+  return (
+    <Pressable
+      style={[styles.card, item.isPromocao && styles.cardPromocao]}
+      onPress={() => navigation.navigate('DetalhesPost', { produto: item })}>
+      <View style={styles.empresaHeader}>
+        <Text style={styles.nomeEmpresa}>LOJA: {item.nomeEmpresa}</Text>
+      </View>
+      <Text style={styles.title}>Produto: {item.nome}</Text>
+      {imagemUrl ? (
+        <Image source={{ uri: imagemUrl }} style={styles.image} />
+      ) : (
+        <View style={[styles.image, { backgroundColor: '#D9D9D9' }]} />
+      )}
+      {item.urlBannerPromocional && (
+        <Image source={{ uri: item.urlBannerPromocional }} style={styles.bannerPromocional} />
+      )}
+      {item.isPromocao ? (
+        <View>
+          <Text style={styles.precoOriginal}>R$ {item.precoProduto?.toFixed(2)}</Text>
+          <Text style={styles.precoPromocional}>R$ {item.precoPromocional?.toFixed(2)}</Text>
+          <Text style={styles.desconto}>{item.porcentagemDesconto?.toFixed(0)}% OFF</Text>
         </View>
-        <Text style={styles.title}>Produto: {item.nome}</Text>
-        {imagemUrl ? (
-          <Image source={{ uri: imagemUrl }} style={styles.image} />
-        ) : (
-          <View style={[styles.image, { backgroundColor: '#D9D9D9' }]} />
-        )}
+      ) : (
         <Text style={styles.price}>R$ {item.precoProduto?.toFixed(2)}</Text>
-      </Pressable>
-    );
-  };
+      )}
+    </Pressable>
+  );
+};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -144,4 +157,20 @@ const styles = StyleSheet.create({
     color: '#983CFF',
     marginTop: 4,
   },
+
+cardPromocao: { 
+  borderWidth: 1.5, borderColor: '#983CFF' 
+},
+bannerPromocional: { 
+  width: '100%', height: 80, borderRadius: 8, marginTop: 6 
+},
+precoOriginal: { 
+  fontSize: 11, color: '#999', textDecorationLine: 'line-through', marginTop: 4 
+},
+precoPromocional: { 
+  fontWeight: 'bold', color: '#983CFF', fontSize: 14 
+},
+desconto: { 
+  fontSize: 11, color: '#fff', backgroundColor: '#983CFF', alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginTop: 2 
+},
 });

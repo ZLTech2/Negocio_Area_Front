@@ -168,37 +168,45 @@ const TelaPerfilEmpresa = ({ navigation }) => {
                 Nenhuma publicação ainda.
               </Text>
             ) : (
-              publicacoes.map((item) => (
-                <View key={item.id} style={styles.card}>
-                  <View style={styles.cardHeader}>
-                    <View>
-                      <Text style={styles.cardTitulo}>{item.nome}</Text>
-                      <Text style={styles.cardValor}>
-                        R$ {item.precoProduto?.toFixed(2)}
-                      </Text>
-                    </View>
-                    <Pressable
-                      onPress={() => abrirOpcoes(item)}
-                      style={styles.menuButton}>
-                      <MaterialIcons name="more-vert" size={22} color="#333" />
-                    </Pressable>
-                  </View>
+              publicacoes.map((item) => {
+                const imagemUrl = item.imagem
+                  ? item.imagem.startsWith('http')
+                    ? item.imagem
+                    : `${API_BASE_URL}${item.imagem}`
+                  : null;
 
-                  {item.imagem ? (
-                    <Image
-                      source={{
-                        uri: item.imagem.startsWith('http')
-                          ? item.imagem
-                          : `${API_BASE_URL}${item.imagem}`,
-                      }}
-                      style={styles.imagefeed}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.imagefeed} />
-                  )}
-                </View>
-              ))
+                return (
+                  <View key={item.id} style={[styles.card, item.isPromocao && styles.cardPromocao]}>
+                    <View style={styles.cardHeader}>
+                      <View>
+                        <Text style={styles.cardTitulo}>{item.nome}</Text>
+                        {item.isPromocao ? (
+                          <View>
+                            <Text style={styles.cardValorOriginal}>R$ {item.precoProduto?.toFixed(2)}</Text>
+                            <Text style={styles.cardValor}>R$ {item.precoPromocional?.toFixed(2)}</Text>
+                            <Text style={styles.cardDesconto}>{item.porcentagemDesconto?.toFixed(0)}% OFF</Text>
+                          </View>
+                        ) : (
+                          <Text style={styles.cardValor}>R$ {item.precoProduto?.toFixed(2)}</Text>
+                        )}
+                      </View>
+                      <Pressable onPress={() => abrirOpcoes(item)} style={styles.menuButton}>
+                        <MaterialIcons name="more-vert" size={22} color="#333" />
+                      </Pressable>
+                    </View>
+
+                    {imagemUrl ? (
+                      <Image source={{ uri: imagemUrl }} style={styles.imagefeed} resizeMode="cover" />
+                    ) : (
+                      <View style={styles.imagefeed} />
+                    )}
+
+                    {item.urlBannerPromocional && (
+                      <Image source={{ uri: item.urlBannerPromocional }} style={styles.bannerPromocional} resizeMode="cover" />
+                    )}
+                  </View>
+                );
+              })
             )}
           </View>
         </ScrollView>

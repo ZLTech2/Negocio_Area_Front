@@ -109,7 +109,7 @@ const CadastroCliente = ({ navigation }) => {
       nome: String(cliente.nome).trim(),
       cpf: String(cliente.cpf).trim(),
       dataNascimento: cliente.dataNascimento
-  ? cliente.dataNascimento.toISOString()
+  ? cliente.dataNascimento.toLocaleDateString('en-CA')
   : null,
       telefone: String(cliente.telefone).trim(),
       email: String(cliente.email).trim().toLowerCase(),

@@ -1,60 +1,78 @@
-import { Modal, View, Text, TextInput, Pressable, StyleSheet, Image, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
-import { useState } from "react";
-import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from "@expo/vector-icons";
+import {
+  Modal, View, Text, TextInput, Pressable, StyleSheet,
+  TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
+} from 'react-native';
+import { useState, useContext } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { UserContext } from '../UserContext';
+import { adicionarPromocao } from '../../services/produtoService';
 
 export default function ModalAdicionarPromocao({ visivel, fechar, post, onSalvar }) {
-  const [valorPromocional, setValorPromocional] = useState("");
-  const [porcentagem, setPorcentagem] = useState("");
-  const [dataFinal, setDataFinal] = useState("");
+  const [porcentagem, setPorcentagem] = useState('');
+  const [dataFinal, setDataFinal] = useState('');
   const [layoutAtivo, setLayoutAtivo] = useState(false);
-  const [imagemLayout, setImagemLayout] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const escolherImagemLayout = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 1,
-    });
+  const { authToken } = useContext(UserContext);
 
-    if (!result.canceled) {
-      setImagemLayout(result.assets[0].uri);
+  const formatarData = (texto) => {
+    const numeros = texto.replace(/\D/g, '').slice(0, 8);
+    if (numeros.length <= 2) return numeros;
+    if (numeros.length <= 4) return `${numeros.slice(0, 2)}/${numeros.slice(2)}`;
+    return `${numeros.slice(0, 2)}/${numeros.slice(2, 4)}/${numeros.slice(4)}`;
+  };
+
+  const valorPromocional = porcentagem
+    ? (post?.precoProduto - (post?.precoProduto * parseFloat(porcentagem)) / 100).toFixed(2)
+    : '';
+
+  const handleSalvar = async () => {
+    if (!porcentagem || !dataFinal) {
+      alert('Preencha a porcentagem e a data final');
+      return;
+    }
+
+    const partes = dataFinal.split('/');
+    if (partes.length !== 3 || partes[0].length !== 2 || partes[1].length !== 2 || partes[2].length !== 4) {
+      alert('Data inválida. Use o formato DD/MM/AAAA');
+      return;
+    }
+
+    const [dia, mes, ano] = partes;
+    const dataFormatada = `${ano}-${mes}-${dia}`;
+
+    setLoading(true);
+    try {
+      const produtoAtualizado = await adicionarPromocao(
+        post.id,
+        {
+          porcentagemDesconto: parseFloat(porcentagem),
+          dataFinalPromocao: dataFormatada,
+          gerarBanner: layoutAtivo,
+        },
+        authToken
+      );
+      onSalvar(produtoAtualizado);
+      handleFechar();
+    } catch (err) {
+      alert(err?.message || 'Erro ao adicionar promoção');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSalvar = () => {
-    onSalvar({
-      ...post,
-      promocao: {
-        valorPromocional,
-        porcentagem,
-        dataFinal,
-        layoutAtivo,
-        imagemLayout,
-      }
-    });
-    fechar();
-  };
-
   const handleFechar = () => {
-    setValorPromocional("");
-    setPorcentagem("");
-    setDataFinal("");
+    setPorcentagem('');
+    setDataFinal('');
     setLayoutAtivo(false);
-    setImagemLayout(null);
     fechar();
   };
 
   return (
     <Modal visible={visivel} transparent animationType="slide">
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.overlay}>
           <View style={styles.container}>
-
-            {/* HEADER ROXO */}
             <View style={styles.header}>
               <TouchableOpacity onPress={handleFechar} style={styles.backButton}>
                 <Ionicons name="arrow-back" size={22} color="#fff" />
@@ -62,26 +80,18 @@ export default function ModalAdicionarPromocao({ visivel, fechar, post, onSalvar
               <View style={{ width: 22 }} />
             </View>
 
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <View style={styles.content}>
                 <Text style={styles.modalTitle}>Adicionar promoção</Text>
 
-                {/* VALOR PROMOCIONAL */}
-                <Text style={styles.label}>Valor do produto promocional</Text>
+                <Text style={styles.label}>Valor original</Text>
                 <TextInput
-                  placeholder="R$ 0,00"
-                  placeholderTextColor="#aaa"
-                  value={valorPromocional}
-                  onChangeText={setValorPromocional}
-                  style={styles.input}
-                  keyboardType="numeric"
+                  style={[styles.input, { backgroundColor: '#f5f5f5', color: '#999' }]}
+                  value={`R$ ${post?.precoProduto?.toFixed(2)}`}
+                  editable={false}
                 />
 
-                {/* PORCENTAGEM */}
-                <Text style={styles.label}>Porcentagem do desconto</Text>
+                <Text style={styles.label}>Porcentagem de desconto</Text>
                 <TextInput
                   placeholder="0%"
                   placeholderTextColor="#aaa"
@@ -91,51 +101,51 @@ export default function ModalAdicionarPromocao({ visivel, fechar, post, onSalvar
                   keyboardType="numeric"
                 />
 
-                {/* DATA FINAL */}
+                <Text style={styles.label}>Valor promocional</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: '#f5f5f5', color: '#999' }]}
+                  value={valorPromocional ? `R$ ${valorPromocional}` : ''}
+                  editable={false}
+                  placeholder="Calculado automaticamente"
+                  placeholderTextColor="#aaa"
+                />
+
                 <Text style={styles.label}>Data final da promoção</Text>
                 <TextInput
                   placeholder="DD/MM/AAAA"
                   placeholderTextColor="#aaa"
                   value={dataFinal}
-                  onChangeText={setDataFinal}
+                  onChangeText={(texto) => setDataFinal(formatarData(texto))}
                   style={styles.input}
+                  keyboardType="numeric"
                 />
 
-                {/* CHECKBOX LAYOUT PROMOCIONAL */}
-                <Pressable
-                  style={styles.checkboxRow}
-                  onPress={() => setLayoutAtivo(!layoutAtivo)}
-                >
+                <Pressable style={styles.checkboxRow} onPress={() => setLayoutAtivo(!layoutAtivo)}>
                   <View style={[styles.checkbox, layoutAtivo && styles.checkboxAtivo]}>
                     {layoutAtivo && <Ionicons name="checkmark" size={14} color="#fff" />}
                   </View>
-                  <Text style={styles.checkboxLabel}>Adicionar layout promocional</Text>
+                  <Text style={styles.checkboxLabel}>Adicionar layout promocional (IA)</Text>
                 </Pressable>
 
-                {/* PREVIEW DE IMAGEM DO LAYOUT */}
                 {layoutAtivo && (
-                  <Pressable style={styles.imageBox} onPress={escolherImagemLayout}>
-                    {imagemLayout ? (
-                      <Image source={{ uri: imagemLayout }} style={styles.previewImage} />
-                    ) : (
-                      <Text style={styles.imageBoxText}>Escolher imagem do layout</Text>
-                    )}
-                  </Pressable>
+                  <View style={styles.bannerInfo}>
+                    <Ionicons name="color-wand-outline" size={24} color="#983CFF" />
+                    <Text style={styles.bannerInfoText}>
+                      Banner será gerado automaticamente pela IA
+                    </Text>
+                  </View>
                 )}
 
-                {/* BOTÕES */}
                 <View style={styles.buttons}>
-                  <Pressable onPress={handleFechar} style={styles.cancelButton}>
+                  <Pressable onPress={handleFechar} style={styles.cancelButton} disabled={loading}>
                     <Text style={styles.buttonText}>CANCELAR</Text>
                   </Pressable>
-
-                  <Pressable onPress={handleSalvar} style={styles.publishButton}>
-                    <Text style={styles.buttonText}>PUBLICAR</Text>
+                  <Pressable onPress={handleSalvar} style={styles.publishButton} disabled={loading}>
+                    {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>PUBLICAR</Text>}
                   </Pressable>
                 </View>
               </View>
             </ScrollView>
-
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -144,115 +154,22 @@ export default function ModalAdicionarPromocao({ visivel, fechar, post, onSalvar
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  container: {
-    backgroundColor: "#fff",
-    width: "90%",
-    borderRadius: 20,
-    overflow: "hidden",
-    maxHeight: "90%",
-  },
-  header: {
-    backgroundColor: "#983CFF",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  backButton: {
-    padding: 2,
-  },
-  content: {
-    padding: 20,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 13,
-    color: "#333",
-    marginBottom: 4,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 9,
-    marginBottom: 12,
-    fontSize: 14,
-  },
-  checkboxRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 14,
-    gap: 10,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 1.5,
-    borderColor: "#983CFF",
-    borderRadius: 4,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  checkboxAtivo: {
-    backgroundColor: "#983CFF",
-  },
-  checkboxLabel: {
-    fontSize: 13,
-    color: "#333",
-  },
-  imageBox: {
-    backgroundColor: "#D9D9D9",
-    borderRadius: 8,
-    height: 120,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 14,
-  },
-  imageBoxText: {
-    color: "#555",
-    fontSize: 14,
-  },
-  previewImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 8,
-  },
-  buttons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 4,
-  },
-  cancelButton: {
-    backgroundColor: "#e74c3c",
-    padding: 11,
-    borderRadius: 8,
-    flex: 1,
-    marginRight: 6,
-    alignItems: "center",
-  },
-  publishButton: {
-    backgroundColor: "#983CFF",
-    padding: 11,
-    borderRadius: 8,
-    flex: 1,
-    marginLeft: 6,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 13,
-  },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  container: { backgroundColor: '#fff', width: '90%', borderRadius: 20, overflow: 'hidden', maxHeight: '90%' },
+  header: { backgroundColor: '#983CFF', paddingVertical: 14, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  backButton: { padding: 2 },
+  content: { padding: 20 },
+  modalTitle: { fontSize: 16, fontWeight: 'bold', textAlign: 'center', marginBottom: 16 },
+  label: { fontSize: 13, color: '#333', marginBottom: 4 },
+  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 6, padding: 9, marginBottom: 12, fontSize: 14 },
+  checkboxRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 10 },
+  checkbox: { width: 20, height: 20, borderWidth: 1.5, borderColor: '#983CFF', borderRadius: 4, justifyContent: 'center', alignItems: 'center' },
+  checkboxAtivo: { backgroundColor: '#983CFF' },
+  checkboxLabel: { fontSize: 13, color: '#333' },
+  bannerInfo: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3e8ff', borderRadius: 8, padding: 12, marginBottom: 14, gap: 10 },
+  bannerInfoText: { color: '#983CFF', fontSize: 13, flex: 1 },
+  buttons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  cancelButton: { backgroundColor: '#e74c3c', padding: 11, borderRadius: 8, flex: 1, marginRight: 6, alignItems: 'center' },
+  publishButton: { backgroundColor: '#983CFF', padding: 11, borderRadius: 8, flex: 1, marginLeft: 6, alignItems: 'center' },
+  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
 });
