@@ -39,6 +39,30 @@ export default function FeedCliente({ navigation }) {
     carregar();
   }, []);
 
+
+  const formatarExpiracao = (dataIso) => {
+    if (!dataIso) return null;
+    const data = new Date(dataIso);
+    const agora = new Date();
+    const diffMs = data - agora;
+
+    if (diffMs <= 0) return 'Promoção encerrada';
+
+    const diffHoras = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+    const dia = String(data.getDate()).padStart(2, '0');
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const ano = data.getFullYear();
+    const hora = String(data.getHours()).padStart(2, '0');
+    const min = String(data.getMinutes()).padStart(2, '0');
+
+    if (diffHoras < 24) {
+      return `Expira em ${diffHoras}h ${diffMinutos}min (${dia}/${mes} às ${hora}:${min})`;
+    }
+    return `Válido até ${dia}/${mes}/${ano} às ${hora}:${min}`;
+  };
+
   const renderItem = ({ item }) => {
     const imagemUrl = item.imagem
       ? item.imagem.startsWith('http')
@@ -56,7 +80,7 @@ export default function FeedCliente({ navigation }) {
         </View>
         <Text style={styles.title}>Produto: {item.nome}</Text>
 
-        {/* Imagem com selo da IA sobreposto */}
+
         <View style={styles.imageWrapper}>
           {imagemUrl ? (
             <Image source={{ uri: imagemUrl }} style={styles.image} resizeMode="cover" />
@@ -64,7 +88,7 @@ export default function FeedCliente({ navigation }) {
             <View style={[styles.image, { backgroundColor: '#D9D9D9' }]} />
           )}
 
-          {/* Selo gerado pela IA no canto superior direito */}
+
           {item.isPromocao && item.urlBannerPromocional && (
             <Image
               source={{ uri: item.urlBannerPromocional }}
@@ -73,7 +97,7 @@ export default function FeedCliente({ navigation }) {
             />
           )}
 
-          {/* Badge simples quando em promoção mas sem selo da IA */}
+
           {item.isPromocao && !item.urlBannerPromocional && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>
@@ -87,6 +111,18 @@ export default function FeedCliente({ navigation }) {
           <View>
             <Text style={styles.precoOriginal}>R$ {item.precoProduto?.toFixed(2)}</Text>
             <Text style={styles.precoPromocional}>R$ {item.precoPromocional?.toFixed(2)}</Text>
+            {formatarExpiracao(item.dataFinalPromocao) && (
+              <View style={styles.expiracaoContainer}>
+                <Text style={[
+                  styles.expiracaoText,
+                  item.dataFinalPromocao && new Date(item.dataFinalPromocao) - new Date() < 24 * 60 * 60 * 1000
+                    ? styles.expiracaoUrgente
+                    : null
+                ]}>
+                  ⏰ {formatarExpiracao(item.dataFinalPromocao)}
+                </Text>
+              </View>
+            )}
           </View>
         ) : (
           <Text style={styles.price}>R$ {item.precoProduto?.toFixed(2)}</Text>
@@ -138,11 +174,9 @@ const styles = StyleSheet.create({
   nomeEmpresa: { fontSize: 12, color: '#983CFF', fontWeight: 'bold' },
   title: { fontWeight: 'bold', marginBottom: 5, fontSize: 13 },
 
-  // Wrapper necessário para o position: absolute do selo funcionar
   imageWrapper: { position: 'relative', width: '100%', height: 120 },
   image: { width: '100%', height: '100%', borderRadius: 8 },
 
-  // Selo da IA — canto superior direito, levemente saindo do card para destacar
   selo: {
     position: 'absolute',
     top: -12,
@@ -151,7 +185,6 @@ const styles = StyleSheet.create({
     height: 72,
   },
 
-  // Badge simples (fallback sem selo da IA)
   badge: {
     position: 'absolute',
     top: 6,
@@ -166,4 +199,7 @@ const styles = StyleSheet.create({
   precoOriginal: { fontSize: 11, color: '#999', textDecorationLine: 'line-through', marginTop: 4 },
   precoPromocional: { fontWeight: 'bold', color: '#983CFF', fontSize: 14 },
   price: { fontWeight: 'bold', color: '#983CFF', marginTop: 4 },
+  expiracaoContainer: { marginTop: 4 },
+  expiracaoText: { fontSize: 10, color: '#666', fontStyle: 'italic' },
+  expiracaoUrgente: { color: '#E53935', fontWeight: 'bold', fontStyle: 'normal' },
 });

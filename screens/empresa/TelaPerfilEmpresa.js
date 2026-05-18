@@ -91,12 +91,48 @@ const TelaPerfilEmpresa = ({ navigation }) => {
     setPublicacoes(produtos);
   };
 
+  const handleExcluirPromocao = (postSemPromocao) => {
+    setPublicacoes((prev) =>
+      prev.map((p) =>
+        p.id === postSemPromocao.id
+          ? {
+              ...p,
+              isPromocao: false,
+              precoPromocional: null,
+              porcentagemDesconto: null,
+              dataFinalPromocao: null,
+              urlBannerPromocional: null,
+            }
+          : p
+      )
+    );
+  };
+
   const handleSalvarPerfil = (dados) => {
     if (dados.nomeLoja) setNomeLoja(dados.nomeLoja);
     if (dados.descricao) setDescricaoLoja(dados.descricao);
     if (dados.fotoPerfil) setFotoPerfilEmpresa(dados.fotoPerfil);
     if (dados.fotoFundo) setFotoFundo(dados.fotoFundo);
     if (dados.cor) setCorPerfil(dados.cor);
+  };
+
+  const formatarExpiracao = (dataIso) => {
+    if (!dataIso) return null;
+    const data = new Date(dataIso);
+    const agora = new Date();
+    const diffMs = data - agora;
+    if (diffMs <= 0) return 'Promoção encerrada';
+    const dia = String(data.getDate()).padStart(2, '0');
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const ano = data.getFullYear();
+    const hora = String(data.getHours()).padStart(2, '0');
+    const min = String(data.getMinutes()).padStart(2, '0');
+    const diffHoras = Math.floor(diffMs / (1000 * 60 * 60));
+    if (diffHoras < 24) {
+      const diffMin = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      return `Expira em ${diffHoras}h ${diffMin}min (${dia}/${mes} às ${hora}:${min})`;
+    }
+    return `Válido até ${dia}/${mes}/${ano} às ${hora}:${min}`;
   };
 
   return (
@@ -185,6 +221,16 @@ const TelaPerfilEmpresa = ({ navigation }) => {
                             <Text style={styles.cardValorOriginal}>R$ {item.precoProduto?.toFixed(2)}</Text>
                             <Text style={styles.cardValor}>R$ {item.precoPromocional?.toFixed(2)}</Text>
                             <Text style={styles.cardDesconto}>{item.porcentagemDesconto?.toFixed(0)}% OFF</Text>
+                            {formatarExpiracao(item.dataFinalPromocao) && (
+                              <Text style={[
+                                styles.cardExpiracao,
+                                item.dataFinalPromocao && new Date(item.dataFinalPromocao) - new Date() < 24 * 60 * 60 * 1000
+                                  ? styles.cardExpiracaoUrgente
+                                  : null
+                              ]}>
+                                ⏰ {formatarExpiracao(item.dataFinalPromocao)}
+                                </Text>
+                            )}
                           </View>
                         ) : (
                           <Text style={styles.cardValor}>R$ {item.precoProduto?.toFixed(2)}</Text>
@@ -204,6 +250,16 @@ const TelaPerfilEmpresa = ({ navigation }) => {
                     {item.urlBannerPromocional && (
                       <Image source={{ uri: item.urlBannerPromocional }} style={styles.bannerPromocional} resizeMode="cover" />
                     )}
+
+                    {item.isPromocao && (
+                      <Pressable
+                        style={styles.btnExcluirPromocao}
+                        onPress={() => handleExcluirPromocao(item)}>
+                        <MaterialIcons name="local-offer" size={14} color="#E53935" />
+                        <Text style={styles.btnExcluirPromocaoText}>Encerrar promoção</Text>
+                      </Pressable>
+                    )}
+
                   </View>
                 );
               })
@@ -219,6 +275,7 @@ const TelaPerfilEmpresa = ({ navigation }) => {
           post={postSelecionado}
           onSalvarEdicao={handleSalvarEdicao}
           onSalvarPromocao={handleSalvarPromocao}
+          onExcluirPromocao={handleExcluirPromocao}
           onConfirmarDeletar={handleDeletar}
         />
 
@@ -315,6 +372,46 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#983CFF',
     marginTop: 2,
+  },
+
+  cardValorOriginal: {
+    fontSize: 12,
+    color: '#999',
+    textDecorationLine: 'line-through',
+    marginTop: 2,
+  },
+  cardDesconto: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#983CFF',
+  },
+  cardExpiracao: {
+    fontSize: 11,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
+  cardExpiracaoUrgente: {
+    color: '#E53935',
+    fontWeight: 'bold',
+    fontStyle: 'normal',
+  },
+  btnExcluirPromocao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E53935',
+    gap: 4,
+  },
+  btnExcluirPromocaoText: {
+    fontSize: 12,
+    color: '#E53935',
+    fontWeight: '600',
   },
   menuButton: { padding: 4 },
   imagefeed: {
