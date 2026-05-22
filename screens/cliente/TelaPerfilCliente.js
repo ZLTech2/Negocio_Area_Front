@@ -12,6 +12,7 @@ import { API_BASE_URL } from '../../config/api';
 import { Pressable } from 'react-native';
 import ModalLogoff from '../../components/modals/ModalLogoff';
 import { getFeedCurtidas } from '../../services/curtidaService';
+import { buscarPerfilCliente } from '../../services/clienteService';
 
 const TelaPerfilCliente = ({ navigation }) => {
 
@@ -31,7 +32,8 @@ const TelaPerfilCliente = ({ navigation }) => {
       const carregar = async () => {
         try {
           //perfil
-          const cliente = await apiFetch('/clientes/me', { token: authToken });
+          const cliente = await buscarPerfilCliente(authToken);
+          
           setNomeCliente(cliente.nome);
           setEmailCliente(cliente.email);
           setTelefoneCliente(cliente.telefone);
@@ -75,12 +77,29 @@ const TelaPerfilCliente = ({ navigation }) => {
         <ScrollView style={styles.scroll}>
           <TopBar navigation={navigation} />
 
+          {/* FUNDO */}
+          <View style={styles.colorone} />
+
           <View style={styles.colortwo}>
             <View style={styles.texto}>
               <Text style={styles.nome}>{nomeCliente}</Text>
               <Text style={styles.info}>{emailCliente}</Text>
-              <Text style={styles.info}>{telefoneCliente}</Text>
             </View>
+
+              <View style={styles.contatoConatiner}>
+                <Text style={styles.contatoText}>Contato: {telefoneCliente}</Text>
+              </View>
+
+              {/* BARRA POSTS CURTIDOS */}
+            <View style={styles.botoes}>
+              <View style={[styles.botao, styles.botaoAtivo]}>
+                <Text style={styles.botaoText}>
+                  POSTS QUE VOCÊ CURTIU
+                </Text>
+              </View>
+            </View>
+              
+            
           </View>
 
           {/* FOTO DE PERFIL */}
@@ -88,10 +107,10 @@ const TelaPerfilCliente = ({ navigation }) => {
             {fotoPerfilCliente ? (
               <Image
                 source={{ uri: fotoPerfilCliente }}
-                style={{ width: 140, height: 140, borderRadius: 100 }}
+                style={styles.fotoPerfil}
               />
             ) : (
-              <Text style={{ textAlign: 'center', color: 'white', marginTop: 30 }}>
+              <Text style={styles.semFotoText}>
                 Sem foto
               </Text>
             )}
@@ -108,18 +127,15 @@ const TelaPerfilCliente = ({ navigation }) => {
                 </Text>
               </View>
             ) : (
-              <Text style={{ textAlign: 'center', marginTop: 20, color: '#999' }}>
+              <Text style={{ textAlign: 'center', marginTop: 20, color: '#999', marginBottom:10 }}>
                 Nenhum cupom disponível no momento.
               </Text>
             )}
 
-             {/* FEED DE CURTIDAS */}
-            <Text style={styles.sectionTitle}>Posts que você curtiu</Text>
-
             {loadingCurtidas ? (
               <ActivityIndicator size="large" color="#983CFF" style={{ marginTop: 20 }} />
             ) : postsCurtidos.length === 0 ? (
-              <Text style={{ textAlign: 'center', marginTop: 20, color: '#999' }}>
+              <Text style={styles.semCurtidasText}>
                 Você ainda não curtiu nenhum post.
               </Text>
             ) : (
@@ -131,33 +147,36 @@ const TelaPerfilCliente = ({ navigation }) => {
                 : null;
 
               return (
-                <Pressable 
-                  key={post.idProduto} 
+                <Pressable
+                  key={post.idProduto}
                   style={styles.cardPost}
                   onPress={() => navigation.navigate('DetalhesPost', { produto: post })}
                 >
-                  {/* PARTE DE CIMA: Título e Preço alinhados na vertical */}
-                  <View style={styles.postHeaderContainer}>
-                    <Text style={styles.postTitulo}>{post.nome}</Text>
-                    <Text style={styles.postPreco}>
-                      R$ {post.precoProduto?.toFixed(2)}
-                    </Text>
+                  <View style={styles.cardHeader}>
+                    <View>
+                      <Text style={styles.postTitulo}>{post.nome}</Text>
+
+                      <Text style={styles.postPreco}>
+                        R$ {post.precoProduto?.toFixed(2)}
+                      </Text>
+                    </View>
                   </View>
 
-                  {/* PARTE DE BAIXO: Imagem grande centralizada */}
-                  <View style={styles.postImageContainer}>
-                    {postImagemUrl ? (
-                      <Image source={{ uri: postImagemUrl }} style={styles.postImage} />
-                    ) : (
-                      <View style={[styles.postImage, { backgroundColor: '#EFEFEF', justifyContent: 'center', alignItems: 'center' }]}>
-                        <Text style={{ fontSize: 14, color: '#666' }}>Sem imagem</Text>
-                      </View>
-                    )}
-                </View>
-              </Pressable>
-                );
-              })
-            )}
+                  {postImagemUrl ? (
+                    <Image
+                      source={{ uri: postImagemUrl }}
+                      style={styles.postImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.postImage} />
+                  )}
+                </Pressable>
+              );
+            })
+
+          )}
+          
 
             
           </View>
@@ -177,14 +196,18 @@ const styles = StyleSheet.create({
   scroll: { 
     paddingBottom: 80 
   },
+  colorone: {
+    height: 130,
+    backgroundColor: '#D9D9D9',
+  },
   colortwo: { 
-    height: 150, 
+    height: 200, 
     backgroundColor: '#BFBFBF', 
-    justifyContent: 'center' 
+    justifyContent: 'space-between',
   },
   texto: { 
     alignItems: 'center', 
-    paddingTop: 50 
+    paddingTop: 70,
   },
   profile: {
     backgroundColor: '#8C8C8C',
@@ -194,24 +217,62 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 100,
-    margin: 20,
     overflow: 'hidden',
     justifyContent: 'center',
   },
+  fotoPerfil: {
+    width: '100%',
+    height: '100%',
+  },
+  semFotoText: {
+    textAlign: 'center',
+    color: 'white',
+    marginTop: 30,
+  },
   nome: { 
     fontWeight: 'bold', 
-    fontSize: 16, 
+    fontSize: 18, 
     color: '#222' 
   },
-  info: { fontSize: 13, 
-    color: '#444', 
-    marginTop: 2 
+  info: { 
+    fontWeight: 'bold',
+    fontSize: 14,
+    color: '#222',
+    marginTop: 4, 
   },
   feed: {
-    marginTop: 80,
+    marginTop: 40,
     width: '90%',
     alignSelf: 'center',
     paddingBottom: 20,
+  },
+  contatoContainer: {
+    backgroundColor: '#666666',
+    width: '100%',
+    paddingVertical: 10,
+  },
+  contatoText: {
+    textAlign: 'center',
+    color: '#000',
+    fontSize: 14,
+  },
+  botoes: {
+    flexDirection: 'row',
+    width: '100%',
+    backgroundColor: '#BFBFBF',
+  },
+  botao: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  botaoAtivo: {
+    backgroundColor: '#D9D9D9',
+  },
+  botaoText: {
+    padding: 10,
+    fontSize: 16,
+    fontWeight:'500'
   },
   cardCupom: {
     backgroundColor: '#983CFF',
@@ -251,11 +312,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5
   },
   cardPost: { 
-    backgroundColor: '#D9D9D9', // Cor de fundo cinza claro para destacar os blocos
-    borderRadius: 16, 
-    marginBottom: 20, 
-    padding: 15,
-    overflow: 'hidden',
+    backgroundColor: '#fff', 
+    borderRadius: 12, 
+    marginBottom: 16, 
+    padding: 12,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
   },
   postHeaderContainer: {
     marginBottom: 10,
@@ -267,8 +338,8 @@ const styles = StyleSheet.create({
     color: '#222' 
   },
   postPreco: {
-    fontSize: 16,
-    color: '#983CFF', // Roxo idêntico ao do seu protótipo
+    fontSize: 14,
+    color: '#983CFF', 
     fontWeight: 'bold',
     marginTop: 2
   },
@@ -282,6 +353,11 @@ const styles = StyleSheet.create({
     width: '100%', 
     height: 180, // Altura ajustada para destacar a imagem em baixo dos títulos
     resizeMode: 'cover' 
+  },
+   semCurtidasText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#999',
   },
 });
 
