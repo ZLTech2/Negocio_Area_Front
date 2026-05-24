@@ -13,6 +13,8 @@ import { Pressable } from 'react-native';
 import ModalLogoff from '../../components/modals/ModalLogoff';
 import { getFeedCurtidas } from '../../services/curtidaService';
 import { buscarPerfilCliente } from '../../services/clienteService';
+import * as ImagePicker from 'expo-image-picker';
+import { salvarFotoCliente } from '../../services/clienteService';
 
 const TelaPerfilCliente = ({ navigation }) => {
 
@@ -33,13 +35,20 @@ const TelaPerfilCliente = ({ navigation }) => {
         try {
           //perfil
           const cliente = await buscarPerfilCliente(authToken);
+
+          console.log(cliente);
+          console.log(cliente.urlPerfil);
           
           setNomeCliente(cliente.nome);
           setEmailCliente(cliente.email);
           setTelefoneCliente(cliente.telefone);
 
-          if (cliente.logoUrl) {
-            setFotoPerfilCliente(`${API_BASE_URL}${cliente.logoUrl}`);
+          if (cliente.urlPerfil) {
+            const foto = cliente.urlPerfil.startsWith('http')
+              ? cliente.urlPerfil
+              : `${API_BASE_URL}${cliente.urlPerfil}`;
+
+            setFotoPerfilCliente(foto);
           }
         } catch (err) {
           console.log('Erro ao carregar perfil:', err);
@@ -69,6 +78,41 @@ const TelaPerfilCliente = ({ navigation }) => {
       carregar();
     }, [authToken])
   );
+
+  const alterarFotoPerfil = async () => {
+
+    try {
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes:  ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (result.canceled) return;
+
+      const imagemUri = result.assets[0].uri;
+
+      const data = await salvarFotoCliente(
+        imagemUri,
+        authToken
+      );
+
+      console.log(data);
+
+      const novaFoto = data.urlPerfil?.startsWith('http')
+        ? data.urlPerfil
+        : `${API_BASE_URL}${data.urlPerfil}`;
+
+      setFotoPerfilCliente(novaFoto);
+
+    } catch (err) {
+
+      console.log('Erro foto perfil:', err);
+
+    }
+};
 
   
   return (
@@ -103,18 +147,31 @@ const TelaPerfilCliente = ({ navigation }) => {
           </View>
 
           {/* FOTO DE PERFIL */}
-          <View style={styles.profile}>
+          <Pressable
+            style={styles.profile}
+            onPress={alterarFotoPerfil}
+          >
+
             {fotoPerfilCliente ? (
+
               <Image
                 source={{ uri: fotoPerfilCliente }}
                 style={styles.fotoPerfil}
               />
+
             ) : (
-              <Text style={styles.semFotoText}>
-                Sem foto
-              </Text>
+
+              <View style={styles.semFotoContainer}>
+
+                <Text style={styles.semFotoText}>
+                  Adicionar foto
+                </Text>
+
+              </View>
+
             )}
-          </View>
+
+          </Pressable>
 
           <View style={styles.feed}>
             {cupom ? (
@@ -228,6 +285,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: 'white',
     marginTop: 30,
+  },
+  semFotoContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   nome: { 
     fontWeight: 'bold', 
