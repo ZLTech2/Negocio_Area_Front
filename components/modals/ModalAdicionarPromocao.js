@@ -6,6 +6,7 @@ import { useState, useContext } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { UserContext } from '../UserContext';
 import { adicionarPromocao } from '../../services/produtoService';
+import Toast from 'react-native-toast-message';
 
 export default function ModalAdicionarPromocao({ visivel, fechar, post, onSalvar }) {
   const [porcentagem, setPorcentagem] = useState('');
@@ -53,9 +54,10 @@ export default function ModalAdicionarPromocao({ visivel, fechar, post, onSalvar
         authToken
       );
       onSalvar(produtoAtualizado);
+      Toast.show({ type: 'success', text1: 'Promoção adicionada com sucesso!' });
       handleFechar();
     } catch (err) {
-      alert(err?.message || 'Erro ao adicionar promoção');
+      Toast.show({ type: 'error', text1: 'Erro ao adicionar promoção', text2: err?.message });
     } finally {
       setLoading(false);
     }
@@ -124,14 +126,14 @@ export default function ModalAdicionarPromocao({ visivel, fechar, post, onSalvar
                   <View style={[styles.checkbox, layoutAtivo && styles.checkboxAtivo]}>
                     {layoutAtivo && <Ionicons name="checkmark" size={14} color="#fff" />}
                   </View>
-                  <Text style={styles.checkboxLabel}>Gerar card de destaque com IA</Text>
+                  <Text style={styles.checkboxLabel}>Gerar card de destaque</Text>
                 </Pressable>
 
                 {layoutAtivo && (
                   <View style={styles.bannerInfo}>
                     <Ionicons name="color-wand-outline" size={24} color="#983CFF" />
                     <Text style={styles.bannerInfoText}>
-                      A IA vai gerar um texto criativo de divulgação que aparece sobre a imagem do produto no feed
+                      Será gerado um card promocional
                     </Text>
                   </View>
                 )}

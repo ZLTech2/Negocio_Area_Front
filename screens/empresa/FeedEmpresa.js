@@ -38,6 +38,25 @@ const Header = ({ abrirModal }) => (
   </View>
 );
 
+const formatarExpiracao = (dataIso) => {
+  if (!dataIso) return null;
+  const data = new Date(dataIso);
+  const agora = new Date();
+  const diffMs = data - agora;
+  if (diffMs <= 0) return 'Promoção encerrada';
+  const dia = String(data.getDate()).padStart(2, '0');
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const ano = data.getFullYear();
+  const hora = String(data.getHours()).padStart(2, '0');
+  const min = String(data.getMinutes()).padStart(2, '0');
+  const diffHoras = Math.floor(diffMs / (1000 * 60 * 60));
+  if (diffHoras < 24) {
+    const diffMin = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `Expira em ${diffHoras}h ${diffMin}min (${dia}/${mes} às ${hora}:${min})`;
+  }
+  return `Válido até ${dia}/${mes}/${ano} às ${hora}:${min}`;
+};
+
 export default function FeedEmpresa({ navigation }) {
   const [modalVisivel, setModalVisible] = useState(false);
   const [modalAddVisivel, setModalAddVisivel] = useState(false);
@@ -68,6 +87,11 @@ export default function FeedEmpresa({ navigation }) {
         ? item.imagem
         : `${API_BASE_URL}${item.imagem}`
       : null;
+
+    const expiracaoTexto = formatarExpiracao(item.dataFinalPromocao);
+    const isUrgente =
+      item.dataFinalPromocao &&
+      new Date(item.dataFinalPromocao) - new Date() < 24 * 60 * 60 * 1000;
 
     return (
       <Pressable
@@ -103,6 +127,11 @@ export default function FeedEmpresa({ navigation }) {
           <View>
             <Text style={styles.precoOriginal}>R$ {item.precoProduto?.toFixed(2)}</Text>
             <Text style={styles.precoPromocional}>R$ {item.precoPromocional?.toFixed(2)}</Text>
+            {expiracaoTexto && (
+              <Text style={[styles.expiracaoText, isUrgente && styles.expiracaoUrgente]}>
+                {expiracaoTexto}
+              </Text>
+            )}
           </View>
         ) : (
           <Text style={styles.price}>R$ {item.precoProduto?.toFixed(2)}</Text>
@@ -128,7 +157,7 @@ export default function FeedEmpresa({ navigation }) {
 
         <FlatList
           data={listaProdutos}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
           renderItem={renderItem}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: 'space-between' }}
@@ -155,11 +184,9 @@ const styles = StyleSheet.create({
   cardPromocao: { borderWidth: 1.5, borderColor: '#983CFF' },
   title: { fontWeight: 'bold', marginBottom: 5, fontSize: 13 },
 
-  // Wrapper necessário para o position: absolute do selo funcionar
   imageWrapper: { position: 'relative', width: '100%', height: 120 },
   image: { width: '100%', height: '100%', borderRadius: 8 },
 
-  // Selo da IA — canto superior direito, levemente saindo do card para destacar
   selo: {
     position: 'absolute',
     top: -12,
@@ -168,7 +195,6 @@ const styles = StyleSheet.create({
     height: 72,
   },
 
-  // Badge simples (fallback sem selo da IA)
   badge: {
     position: 'absolute',
     top: 6,
@@ -183,6 +209,9 @@ const styles = StyleSheet.create({
   precoOriginal: { fontSize: 11, color: '#999', textDecorationLine: 'line-through', marginTop: 4 },
   precoPromocional: { fontWeight: 'bold', color: '#983CFF', fontSize: 14 },
   price: { fontWeight: 'bold', color: '#983CFF' },
+
+  expiracaoText: { fontSize: 10, color: '#666', fontStyle: 'italic', marginTop: 3 },
+  expiracaoUrgente: { color: '#E53935', fontWeight: 'bold', fontStyle: 'normal' },
 
   buttomAddPost: {
     position: 'absolute',

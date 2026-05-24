@@ -196,7 +196,7 @@ const TelaPerfilCliente = ({ navigation }) => {
                 Você ainda não curtiu nenhum post.
               </Text>
             ) : (
-            postsCurtidos.map((post) => {
+            postsCurtidos.map((post, index) => {
               const postImagemUrl = post.imagem
                 ? post.imagem.startsWith('http')
                   ? post.imagem
@@ -205,7 +205,7 @@ const TelaPerfilCliente = ({ navigation }) => {
 
               return (
                 <Pressable
-                  key={post.idProduto}
+                  key={post.idProduto ?? post.id ?? index}
                   style={styles.cardPost}
                   onPress={() => navigation.navigate('DetalhesPost', { produto: post })}
                 >

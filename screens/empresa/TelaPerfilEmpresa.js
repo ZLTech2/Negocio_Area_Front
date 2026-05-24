@@ -6,6 +6,7 @@ import {
   Image,
   ScrollView,
   Pressable,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -15,10 +16,11 @@ import TopBar from '../../components/TopBar';
 import { UserContext } from '../../components/UserContext';
 import ModalOpcoesPost from '../../components/modals/ModalOpcoesPost';
 import ModalEditarPerfil from '../../components/modals/ModalEditarPerfil';
-import { buscarProdutosEmpresa } from '../../services/produtoService';
+import { buscarProdutosEmpresa, removerPromocao } from '../../services/produtoService';
 import { buscarPerfilEmpresa } from '../../services/empresaService';
 import { API_BASE_URL } from '../../config/api';
 import { useFocusEffect } from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 
 const TelaPerfilEmpresa = ({ navigation }) => {
   const [ativo, setAtivo] = useState('publicacoes');
@@ -91,23 +93,46 @@ const TelaPerfilEmpresa = ({ navigation }) => {
     setPublicacoes(produtos);
   };
 
-  const handleExcluirPromocao = (postSemPromocao) => {
-    setPublicacoes((prev) =>
-      prev.map((p) =>
-        p.id === postSemPromocao.id
-          ? {
-              ...p,
-              isPromocao: false,
-              precoPromocional: null,
-              porcentagemDesconto: null,
-              dataFinalPromocao: null,
-              urlBannerPromocional: null,
-            }
-          : p
-      )
-    );
-  };
-
+  // TROQUE todo o handleExcluirPromocao por este:
+const handleExcluirPromocao = (postSemPromocao) => {
+  Alert.alert(
+    'Encerrar promoção',
+    `Deseja encerrar a promoção de "${postSemPromocao.nome}"?`,
+    [
+      {
+        text: 'Cancelar',
+        style: 'cancel',
+      },
+      {
+        text: 'Encerrar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await removerPromocao(postSemPromocao.id, authToken);
+            setPublicacoes((prev) =>
+              prev.map((p) =>
+                p.id === postSemPromocao.id
+                  ? {
+                      ...p,
+                      isPromocao: false,
+                      precoPromocional: null,
+                      porcentagemDesconto: null,
+                      dataFinalPromocao: null,
+                      urlBannerPromocional: null,
+                    }
+                  : p
+              )
+            );
+            Toast.show({ type: 'success', text1: 'Promoção encerrada com sucesso' });
+          } catch (err) {
+            console.log('Erro ao encerrar promoção:', err);
+            Alert.alert('Erro', 'Não foi possível encerrar a promoção. Tente novamente.');
+          }
+        },
+      },
+    ]
+  );
+};
   const handleSalvarPerfil = (dados) => {
     if (dados.nomeLoja) setNomeLoja(dados.nomeLoja);
     if (dados.descricao) setDescricaoLoja(dados.descricao);
@@ -228,7 +253,7 @@ const TelaPerfilEmpresa = ({ navigation }) => {
                                   ? styles.cardExpiracaoUrgente
                                   : null
                               ]}>
-                                ⏰ {formatarExpiracao(item.dataFinalPromocao)}
+                                {formatarExpiracao(item.dataFinalPromocao)}
                                 </Text>
                             )}
                           </View>

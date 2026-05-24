@@ -119,7 +119,7 @@ export default function FeedCliente({ navigation }) {
                     ? styles.expiracaoUrgente
                     : null
                 ]}>
-                  ⏰ {formatarExpiracao(item.dataFinalPromocao)}
+                  {formatarExpiracao(item.dataFinalPromocao)}
                 </Text>
               </View>
             )}
@@ -147,7 +147,7 @@ export default function FeedCliente({ navigation }) {
         />
         <FlatList
           data={listaProdutos}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
           renderItem={renderItem}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: 'space-between' }}

@@ -12,7 +12,8 @@ import {
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
 import { salvarPreferenciasNotificacao } from '../../services/Notificacao';
-import {UserContext} from '../UserContext';
+import { UserContext } from '../UserContext';
+import Toast from 'react-native-toast-message';
 
 const CATEGORIAS_DISPONIVEIS = [
   'Mercado',
@@ -22,7 +23,7 @@ const CATEGORIAS_DISPONIVEIS = [
 ];
 
 export default function ModalNotificacao({ visivel, fechar }) {
-  const {authToken} = useContext(UserContext);
+  const { authToken } = useContext(UserContext);
   //estado para cada campo no formulario
   const [raio, setRaio] = useState(5);
   const [todasCategorias, setTodasCategorias] = useState(false);
@@ -59,10 +60,10 @@ export default function ModalNotificacao({ visivel, fechar }) {
       setSalvando(true);
       setErro(null);
       await salvarPreferenciasNotificacao(dadosParaAPI, authToken);
-      console.log('Preferências salvas');
+      Toast.show({ type: 'success', text1: 'Preferências salvas com sucesso!' }); 
       fechar(null);
     } catch (error) {
-      alert(`Status: ${error.status}\nToken: ${authToken ? 'tem token' : 'NULL'}\nErro: ${error.rawText}`);
+      Toast.show({ type: 'error', text1: 'Erro ao salvar preferências', text2: error?.rawText });
       setErro('Não foi possível salvar as preferências. Tente novamente.');
       console.log('Erro', error);
     } finally {
@@ -121,7 +122,7 @@ export default function ModalNotificacao({ visivel, fechar }) {
                         style={[
                           styles.tagTexto,
                           categoriasSelecionadas.includes(cat) &&
-                            styles.tagTextoAtiva,
+                          styles.tagTextoAtiva,
                         ]}>
                         {cat}
                       </Text>
@@ -158,9 +159,9 @@ export default function ModalNotificacao({ visivel, fechar }) {
                 <Text style={styles.textButtom}>CANCELAR</Text>
               </Pressable>
 
-              <Pressable style={[styles.buttomSalvar, salvando && {opacity: 0.6}]} onPress={salvarDados}
-              disabled={salvando}>
-                <Text style={styles.textButtom}>{salvando ? 'SALVANDO...' :'SALVAR'}</Text>
+              <Pressable style={[styles.buttomSalvar, salvando && { opacity: 0.6 }]} onPress={salvarDados}
+                disabled={salvando}>
+                <Text style={styles.textButtom}>{salvando ? 'SALVANDO...' : 'SALVAR'}</Text>
               </Pressable>
             </View>
           </ScrollView>
