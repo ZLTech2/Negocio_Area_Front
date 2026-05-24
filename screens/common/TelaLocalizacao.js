@@ -7,10 +7,12 @@ import {
   Pressable,
   TextInput,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Location from 'expo-location';
 import TopBar from '../../components/TopBar';
 import Footer from '../../components/Footer';
 import { buscarTodasEmpresas } from '../../services/empresaService';
@@ -23,12 +25,46 @@ if (Platform.OS !== 'web') {
   Marker = Maps.Marker;
 }
 
+const REGIAO_PADRAO = {
+  latitude: -23.5319,
+  longitude: -46.36951,
+  latitudeDelta: 0.05,
+  longitudeDelta: 0.05,
+};
+
 const TelaLocalizacao = ({ navigation }) => {
   const [empresas, setEmpresas] = useState([]);
   const [busca, setBusca] = useState('');
   const [modo, setModo] = useState('mapa');
   const [carregando, setCarregando] = useState(true);
+  const [regiao, setRegiao] = useState(null);
+  const [erroLocalizacao, setErroLocalizacao] = useState(false);
 
+  // Obtém localização atual do usuário
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== 'granted') {
+        setErroLocalizacao(true);
+        setRegiao(REGIAO_PADRAO);
+        return;
+      }
+
+      const localizacao = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      setRegiao({
+        latitude: localizacao.coords.latitude,
+        longitude: localizacao.coords.longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      });
+    })();
+  }, []);
+
+  // Carrega empresas cadastradas
   useEffect(() => {
     const carregar = async () => {
       try {
@@ -49,6 +85,9 @@ const TelaLocalizacao = ({ navigation }) => {
   const resultados = empresas.filter((e) =>
     (e.nomeEmpresa || e.nome || '').toLowerCase().includes(busca.toLowerCase())
   );
+
+  const mapaCarregando = !regiao || carregando;
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
@@ -91,38 +130,49 @@ const TelaLocalizacao = ({ navigation }) => {
                     Mapa indisponível na versão web
                   </Text>
                 </View>
+              ) : mapaCarregando ? (
+                <View style={styles.mapaIndisponivel}>
+                  <ActivityIndicator size="large" color="#983cff" />
+                  <Text style={[styles.mensagem, { marginTop: 10 }]}>
+                    Obtendo localização...
+                  </Text>
+                </View>
               ) : (
-                <MapView
-                  style={{ width: '100%', height: 490 }}
-                  initialRegion={{
-                    latitude: -23.5319,
-                    longitude: -46.36951,
-                    latitudeDelta: 0.05,
-                    longitudeDelta: 0.05,
-                  }}>
-                  {empresas.map((empresa) => (
-                    <Marker
-                      key={empresa.id}
-                      coordinate={{
-                        latitude: empresa.latitude,
-                        longitude: empresa.longitude,
-                      }}
-                      pinColor="#983cff"
-                      title={empresa.nome}
-                      description={
-                        empresa.enderecoCompleto ||
-                        [
-                          empresa.endereco?.rua,
-                          empresa.endereco?.numero,
-                          empresa.endereco?.bairro,
-                          empresa.endereco?.cep,
-                        ]
-                          .filter(Boolean)
-                          .join(', ')
-                      }
-                    />
-                  ))}
-                </MapView>
+                <>
+                  {erroLocalizacao && (
+                    <Text style={styles.avisoLocalizacao}>
+                      ⚠️ Permissão negada — exibindo localização padrão
+                    </Text>
+                  )}
+                  <MapView
+                    style={{ width: '100%', height: 490 }}
+                    initialRegion={regiao}
+                    showsUserLocation={!erroLocalizacao}
+                    followsUserLocation={!erroLocalizacao}>
+                    {empresas.map((empresa) => (
+                      <Marker
+                        key={empresa.id}
+                        coordinate={{
+                          latitude: empresa.latitude,
+                          longitude: empresa.longitude,
+                        }}
+                        pinColor="#983cff"
+                        title={empresa.nome}
+                        description={
+                          empresa.enderecoCompleto ||
+                          [
+                            empresa.endereco?.rua,
+                            empresa.endereco?.numero,
+                            empresa.endereco?.bairro,
+                            empresa.endereco?.cep,
+                          ]
+                            .filter(Boolean)
+                            .join(', ')
+                        }
+                      />
+                    ))}
+                  </MapView>
+                </>
               )
             ) : (
               <View style={styles.lista}>
@@ -232,9 +282,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  mensagem: {
-    color: 'gray',
-    fontSize: 16,
+  mensagem: { color: 'gray', fontSize: 16 },
+  avisoLocalizacao: {
+    textAlign: 'center',
+    color: '#c87000',
+    fontSize: 13,
+    marginBottom: 6,
   },
 });
 
