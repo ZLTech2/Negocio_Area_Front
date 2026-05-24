@@ -28,10 +28,6 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
       "package": "com.anonymous.snack8ce03e812ebd42a5819c49142e79c0b5"
@@ -46,6 +42,11 @@
           "locationWhenInUsePermission": "Precisamos da sua localização para exibir o mapa centrado na sua posição atual."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "21b97296-6432-42db-8bf7-1070c7ebedca"
+      }
+    }
   }
 }
