@@ -49,10 +49,10 @@ https://springboot-mobile-api-1.onrender.com
 ## Repositórios
 
 Backend:
-(link)
+https://github.com/ZLTech2/SpringBoot-mobile-api
 
 Frontend Web:
-(link)
+https://github.com/ZLTech2/negocioAreaWeb
 
 ## Licença
 
