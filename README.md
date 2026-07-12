@@ -29,9 +29,9 @@ Aplicação mobile desenvolvida em **React Native** para a plataforma **Negócio
 ## ▶️ Executando localmente
 
 ```bash
-git clone https://github.com/ZLTech2/Negocio_Area_Mobile.git
+git clone https://github.com/ZLTech2/Negocio_Area_Front.git
 
-cd Negocio_Area_Mobile
+cd Negocio_Area_Front
 
 npm install
 
