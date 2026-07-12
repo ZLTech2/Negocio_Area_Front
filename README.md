@@ -1,11 +1,59 @@
-# Sample Snack app
+# Negócio na Área - Mobile
 
-Open the `App.js` file to start writing some code. You can preview the changes directly on your phone or tablet by scanning the **QR code** or use the iOS or Android emulators. When you're done, click **Save** and share the link!
+Aplicação mobile desenvolvida em React Native para conectar pequenas empresas a clientes, permitindo divulgação de produtos, localização de estabelecimentos e interação entre usuários.
 
-When you're ready to see everything that Expo provides (or if you want to use your own editor) you can **Download** your project and use it with [expo cli](https://docs.expo.dev/get-started/installation/#expo-cli)).
+## Funcionalidades
 
-All projects created in Snack are publicly available, so you can easily share the link to this project via link, or embed it on a web page with the `<>` button.
+- Login e autenticação
+- Cadastro e edição de perfil
+- Busca de lojas
+- Busca de produtos
+- Mapa com empresas cadastradas
+- Curtir produtos
+- Cupons de aniversário
+- Notificações por e-mail
+- Promoções
+- Upload de imagens
+- Dashboard do usuário
 
-If you're having problems, you can tweet to us [@expo](https://twitter.com/expo) or ask in our [forums](https://forums.expo.dev/c/expo-dev-tools/61) or [Discord](https://chat.expo.dev/).
+## Tecnologias
 
-Snack is Open Source. You can find the code on the [GitHub repo](https://github.com/expo/snack).
+- React Native
+- Expo
+- JavaScript
+- React Navigation
+- AsyncStorage
+- Google Maps
+- Cloudinary
+
+## Instalação
+
+```bash
+git clone https://github.com/ZLTech2/Negocio_Area_Mobile.git
+
+cd Negocio_Area_Mobile
+
+npm install
+
+npx expo start
+```
+
+## Backend
+
+Este projeto utiliza a API disponível em:
+
+```
+https://springboot-mobile-api-1.onrender.com
+```
+
+## Repositórios
+
+Backend:
+(link)
+
+Frontend Web:
+(link)
+
+## Licença
+
+Projeto desenvolvido como Trabalho de Graduação da Fatec.
