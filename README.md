@@ -1,14 +1,14 @@
 # Negócio na Área - Mobile
 
-Aplicação mobile desenvolvida em React Native para conectar pequenas empresas a clientes, permitindo divulgação de produtos, localização de estabelecimentos e interação entre usuários.
+Aplicação mobile desenvolvida em **React Native** para a plataforma **Negócio na Área**, permitindo que clientes encontrem pequenas empresas, descubram produtos, acompanhem promoções e interajam com estabelecimentos próximos.
 
-## Funcionalidades
+## 🚀 Funcionalidades
 
 - Login e autenticação
 - Cadastro e edição de perfil
 - Busca de lojas
 - Busca de produtos
-- Mapa com empresas cadastradas
+- Localização de empresas no mapa
 - Curtir produtos
 - Cupons de aniversário
 - Notificações por e-mail
@@ -16,7 +16,7 @@ Aplicação mobile desenvolvida em React Native para conectar pequenas empresas 
 - Upload de imagens
 - Dashboard do usuário
 
-## Tecnologias
+## 🛠️ Tecnologias
 
 - React Native
 - Expo
@@ -26,7 +26,7 @@ Aplicação mobile desenvolvida em React Native para conectar pequenas empresas 
 - Google Maps
 - Cloudinary
 
-## Instalação
+## ▶️ Executando localmente
 
 ```bash
 git clone https://github.com/ZLTech2/Negocio_Area_Mobile.git
@@ -38,22 +38,21 @@ npm install
 npx expo start
 ```
 
-## Backend
+## 🌐 API
 
-Este projeto utiliza a API disponível em:
+O aplicativo consome a API hospedada no Render.
 
-```
 https://springboot-mobile-api-1.onrender.com
-```
 
-## Repositórios
+## 🔗 Repositórios
 
-Backend:
-https://github.com/ZLTech2/SpringBoot-mobile-api
+- ⚙️ Backend: https://github.com/ZLTech2/SpringBoot-mobile-api
+- 💻 Frontend Web: https://github.com/ZLTech2/negocioAreaWeb
 
-Frontend Web:
-https://github.com/ZLTech2/negocioAreaWeb
+## 🌍 Aplicação Web
 
-## Licença
+https://negocio-area-web.vercel.app/
+
+## 📄 Licença
 
 Projeto desenvolvido como Trabalho de Graduação da Fatec.
